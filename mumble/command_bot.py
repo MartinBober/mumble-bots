@@ -41,20 +41,12 @@ class CommandBot(Bot):
   def on_text_message(self, from_user, to_users, to_channels, tree_ids, message):
     # Only answer to direct messages, not channel messages.
     cmd = shlex.split(message.encode('ascii', 'ignore'))
-    if self.state.user in to_users:
-      for p in self.__prefixes.keys():
-        if cmd[0].startswith(p):
-          cmd[0] = cmd[0][len(p):]
-          func = getattr(self, self.__prefixes[p])
-          func(from_user, *cmd)
-          return
-    if self.state.channel in to_channels:
-      for p in self.__channel_prefixes.keys():
-        if cmd[0].startswith(p):
-          cmd[0] = cmd[0][len(p):]
-          func = getattr(self, self.__channel_prefixes[p])
-          func(from_user, *cmd)
-          return
+    for p in self.__prefixes.keys():
+      if cmd[0].startswith(p):
+        cmd[0] = cmd[0][len(p):]
+        func = getattr(self, self.__prefixes[p])
+        func(from_user, *cmd)
+	return
 
     Bot.on_text_message(self, from_user, to_users, to_channels, tree_ids,
                         message)
