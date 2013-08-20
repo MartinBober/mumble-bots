@@ -157,7 +157,13 @@ class Bot(object):
     self.connection.join()
 
   def send_message(self, user, message):
-    self.connection.send_message(destination = user.session, message = message)
+    if user is None:
+      destinations = []
+      for u in self.state.root.get_users():
+        destinations += [u.session]
+      self.connection.send_message(destination = destinations, message=message)
+    else:
+      self.connection.send_message(destination = user.session, message = message)
 
   def stop(self):
     self.connection.stop()

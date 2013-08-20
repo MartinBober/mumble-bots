@@ -37,7 +37,7 @@ class DiceBot(mumble.CommandBot):
             for result in results:
               strBuf = strBuf + str(result) + " "
             print strBuf
-            self.send_message(from_user, strBuf)
+            self.send_message(None, strBuf)
             success = True
         except exceptions.ValueError:
           self.send_message(from_user, "Error in command.")

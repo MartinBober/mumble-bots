@@ -47,7 +47,10 @@ class Connection(threading.Thread):
     self._send(protocol.ping(int(self.last_ping)))
 
   def send_message(self, message, destination = None):
-    self._send(protocol.text_message(session = [destination],
+    dest = []
+    if destination:
+      dest = destination
+    self._send(protocol.text_message(session = dest,
                                      message = message))
 
   def ask_texture_for_user(self, session_id):
