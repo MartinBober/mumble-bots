@@ -209,10 +209,6 @@ class Bot(object):
       self.on_message_trees(from_user = from_user, tree_ids = tree_ids,
                             message = message)
 
-  def on_voice_ping(self, session_id):
-    pass
-  def on_voice_talk(self, from_user, sequence, data):
-    pass
 
   ##############################################################################
   ### EVENTS
