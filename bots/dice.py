@@ -42,5 +42,35 @@ class DiceBot(mumble.CommandBot):
         except exceptions.ValueError:
           self.send_message(from_user, "Error in command.")
           return
+    if (len(args) > 2) and (args[0] == "roll_sr"):
+      try:
+        targetNumber = int(args[1])
+        nDice = int(args[2])
+        if not ((nDice < 1) or (targetNumber < 2)):
+          results = []
+          strBuf = ""
+          fails = 0
+          successes = 0
+          for i in range(nDice):
+            result = random.randint(1,6)
+            # Rule of 6
+            while (result == 6):
+              result = result + random.randint(1,6)
+            if result == 1:
+              fails += 1
+            if result >= targetNumber:
+              successes += 1
+            strBuf = strBuf + str(result)
+            results += [result]
+          success = True
+          if successes > fails:
+            self.send_message(None, ("You made it with %d net succeses. Results: " % (successes-fails,)) + strBuf)
+          if fails >= successes:
+            if fails == len(results):
+              self.send_message(None, "CATASTROPHIC FAILURE. It was nice knowing you, Chummer. Results: " + strBuf)
+            else:
+              self.send_message(None, "You failed. Results: " + strBuf)
+      except exceptions.ValueError:
+          self.send_message(from_user, "Error in command.")
     if not success:
       self.send_message(from_user, "Error in commad.")
