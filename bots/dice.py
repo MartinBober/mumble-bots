@@ -19,7 +19,6 @@ class DiceBot(mumble.CommandBot):
   def __init__(self):
     mumble.CommandBot.__init__(self)
 
-
   def on_bang(self, from_user, *args):
     print "Command: " + str(args)
     success = False
@@ -36,6 +35,7 @@ class DiceBot(mumble.CommandBot):
             strBuf = "Results: "
             for result in results:
               strBuf = strBuf + str(result) + " "
+            strBuf = strBuf + "on %d D%d" %(nDice, dDimension)
             print strBuf
             self.send_message(None, strBuf)
             success = True
