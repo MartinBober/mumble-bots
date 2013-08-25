@@ -60,7 +60,7 @@ class DiceBot(mumble.CommandBot):
               fails += 1
             if result >= targetNumber:
               successes += 1
-            strBuf = strBuf + str(result)
+            strBuf = strBuf + str(result)+ " "
             results += [result]
           success = True
           if successes > fails:
