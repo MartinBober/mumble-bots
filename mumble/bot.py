@@ -165,6 +165,30 @@ class Bot(object):
     else:
       self.connection.send_message(destination = user.session, message = message)
 
+  # Sends a massage to all users in the same channel as user
+  def send_message_channel(self, user, message):
+    user_in = self.user_is_in_subchannel(user, self.state.root)
+    if user_in is None:
+      print "Error! Subchannel belonging to user not found!"
+    else:
+      print "Replying to channel " + str(user_in.id)
+      destinations = []
+      for u in user_in.get_users():
+        destinations += [u.session]
+      self.connection.send_message(destination = destinations, message=message)
+      
+
+  def user_is_in_subchannel(self, user, channel):
+    if user in channel.get_users():
+      return channel
+    subchannels = channel.get_children()
+    for subchannel in subchannels:
+      user_in = self.user_is_in_subchannel(user, subchannel)
+      if not (user_in is None):
+        return user_in
+    return None
+
+
   def stop(self):
     self.connection.stop()
     self.connection = None

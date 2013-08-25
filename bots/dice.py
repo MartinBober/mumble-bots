@@ -37,7 +37,7 @@ class DiceBot(mumble.CommandBot):
               strBuf = strBuf + str(result) + " "
             strBuf = strBuf + "on %d D%d" %(nDice, dDimension)
             print strBuf
-            self.send_message(None, strBuf)
+            self.send_message_channel(from_user, strBuf)
             success = True
         except exceptions.ValueError:
           self.send_message(from_user, "Error in command.")
@@ -64,12 +64,12 @@ class DiceBot(mumble.CommandBot):
             results += [result]
           success = True
           if successes > fails:
-            self.send_message(None, ("You made it with %d net succeses. Results: " % (successes-fails,)) + strBuf)
+            self.send_message_channel(from_user, ("You made it with %d net succeses. Results: " % (successes-fails,)) + strBuf)
           if fails >= successes:
             if fails == len(results):
-              self.send_message(None, "CATASTROPHIC FAILURE. It was nice knowing you, Chummer. Results: " + strBuf)
+              self.send_message_channel(from_user, "CATASTROPHIC FAILURE. It was nice knowing you, Chummer. Results: " + strBuf)
             else:
-              self.send_message(None, "You failed. Results: " + strBuf)
+              self.send_message_channel(from_user, "You failed. Results: " + strBuf)
       except exceptions.ValueError:
           self.send_message(from_user, "Error in command.")
     if not success:
