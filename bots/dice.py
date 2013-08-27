@@ -53,15 +53,17 @@ class DiceBot(mumble.CommandBot):
           successes = 0
           for i in range(nDice):
             result = random.randint(1,6)
+            resultSum = result
             # Rule of 6
             while (result == 6):
-              result = result + random.randint(1,6)
-            if result == 1:
+              result = random.randint(1,6)
+              resultSum += result
+            if resultSum == 1:
               fails += 1
-            if result >= targetNumber:
+            if resultSum >= targetNumber:
               successes += 1
-            strBuf = strBuf + str(result)+ " "
-            results += [result]
+            strBuf = strBuf + str(resultSum)+ " "
+            results += [resultSum]
           success = True
           if successes > fails:
             self.send_message_channel(from_user, ("You made it with %d net succeses. Results: " % (successes-fails,)) + strBuf)
