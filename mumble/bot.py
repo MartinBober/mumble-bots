@@ -163,7 +163,7 @@ class Bot(object):
         destinations += [u.session]
       self.connection.send_message(destination = destinations, message=message)
     else:
-      self.connection.send_message(destination = user.session, message = message)
+      self.connection.send_message(destination = [user.session], message = message)
 
   # Sends a massage to all users in the same channel as user
   def send_message_channel(self, user, message):
