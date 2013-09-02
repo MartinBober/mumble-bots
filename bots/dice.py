@@ -65,9 +65,9 @@ class DiceBot(mumble.CommandBot):
             strBuf = strBuf + str(resultSum)+ " "
             results += [resultSum]
           success = True
-          if successes > fails:
-            self.send_message_channel(from_user, ("You made it with %d net succeses. Results: " % (successes-fails,)) + strBuf)
-          if fails >= successes:
+          if (successes > 0) and (not (fails == len(results))):
+            self.send_message_channel(from_user, ("You made it with %d successes. Results: " % (successes,)) + strBuf)
+          else:
             if fails == len(results):
               self.send_message_channel(from_user, "CATASTROPHIC FAILURE. It was nice knowing you, Chummer. Results: " + strBuf)
             else:
