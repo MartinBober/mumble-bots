@@ -19,6 +19,16 @@ class DiceBot(mumble.CommandBot):
   def __init__(self):
     mumble.CommandBot.__init__(self)
 
+  def evalNumber(self,toEval):
+    result = 0
+    for term in toEval.split("+"):
+      subTerms = term.split("-")
+      termResult = int(subTerms[0])
+      for subTerm in subTerms[1:]:
+        termResult = termResult-int(subTerm)
+      result = result+termResult
+    return result
+
   def on_bang(self, from_user, *args):
     print "Command: " + str(args)
     success = False
@@ -26,8 +36,8 @@ class DiceBot(mumble.CommandBot):
       splitarg = args[1].lower().split("d")
       if len(splitarg) == 2:
         try:
-          nDice = int(splitarg[0])
-          dDimension = int(splitarg[1])
+          nDice = self.evalNumber(splitarg[0])
+          dDimension = self.evalNumber(splitarg[1])
           if not ((nDice < 1) or (dDimension < 1)):
             results = []
             for i in range(nDice):
@@ -44,8 +54,8 @@ class DiceBot(mumble.CommandBot):
           return
     if (len(args) > 2) and (args[0] == "roll_sr"):
       try:
-        targetNumber = int(args[1])
-        nDice = int(args[2])
+        targetNumber = self.evalNumber(args[1])
+        nDice = self.evalNumber(args[2])
         if not ((nDice < 1) or (targetNumber < 2)):
           results = []
           strBuf = ""
