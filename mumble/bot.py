@@ -106,6 +106,9 @@ class BotState(object):
         raise Exception('Invalid Parent.')
       self.channels_by_id[msg.parent].add_child(chan)
 
+  def on_socket_closed(self, msg):
+    self.bot.on_socket_closed()
+
   def on_user_state(self, msg):
     if msg.session not in self.users_by_session:
       user = User(self.bot, msg.session)
@@ -150,6 +153,8 @@ class Bot(object):
     if self.connection:
       LOGGER.warning("Starting the bot twice. Will disconnect old bot.")
       self.stop()
+    self.server = server
+    self.nickname = nickname
     self.connection = Connection(server, nickname, delegate = self.state,
                                  version = self.version)
 
@@ -249,4 +254,6 @@ class Bot(object):
   def on_message_channels(self, from_user, to_channels, message):
     pass
   def on_message_trees(self, from_user, tree_ids, message):
+    pass
+  def on_socket_close():
     pass

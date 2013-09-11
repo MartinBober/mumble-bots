@@ -15,9 +15,21 @@ import mumble
 import random
 import exceptions
 
+import socket
+
 class DiceBot(mumble.CommandBot):
   def __init__(self):
     mumble.CommandBot.__init__(self)
+
+  def on_socket_closed(self):
+    connected = False
+    while not connected: 
+      try:
+        print "Reconnecting"
+        self.start(self.server, self.nickname)
+        connected = True
+      except socket.error:
+        connected = False
 
   def evalNumber(self,toEval):
     result = 0

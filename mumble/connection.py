@@ -90,6 +90,8 @@ class Connection(threading.Thread):
         received = self.socket.recv(protocol.HEADER_SIZE - len(header))
         header += received
         if len(received) == 0:
+          # Reveicing 0 bytes when select indicates ready for read, the connection has been closed.
+          self.keep_going = False;
           return None
     except:
       return None
@@ -253,8 +255,10 @@ class Connection(threading.Thread):
       # seconds.
       if self.next_ping and time.time() >= self.next_ping:
         self.ping()
+      
     return True
 
   def run(self):
     self._loop()
     self.socket.close()
+    self._call("on_socket_closed", None)
