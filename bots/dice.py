@@ -30,8 +30,10 @@ class DiceBot(mumble.CommandBot):
         print "Reconnecting"
         self.start(self.server, self.nickname)
         connected = True
+        print "Connection re-established"
       except socket.error:
         connected = False
+        time.sleep(5)
 
   def evalNumber(self,toEval):
     result = 0
