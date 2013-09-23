@@ -148,6 +148,7 @@ class Bot(object):
     self.version = version
     self.state = BotState(self)
     self.connection = None
+    self.stop_ordered = False
 
   def start(self, server, nickname):
     if self.connection:
@@ -157,6 +158,7 @@ class Bot(object):
     self.nickname = nickname
     self.connection = Connection(server, nickname, delegate = self.state,
                                  version = self.version)
+    self.stop_ordered = False
 
   def join(self):
     self.connection.join()
@@ -195,6 +197,7 @@ class Bot(object):
 
 
   def stop(self):
+    self.stop_ordered = True
     self.connection.stop()
     self.connection = None
 

@@ -22,6 +22,8 @@ class DiceBot(mumble.CommandBot):
     mumble.CommandBot.__init__(self)
 
   def on_socket_closed(self):
+    if self.stop_ordered:
+      return
     connected = False
     while not connected: 
       try:
