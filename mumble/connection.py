@@ -86,13 +86,15 @@ class Connection(threading.Thread):
     # Get the header first.
     try:
       header = ''
+      first = True
       while len(header) < protocol.HEADER_SIZE:
         received = self.socket.recv(protocol.HEADER_SIZE - len(header))
         header += received
-        if len(received) == 0:
+        if first and (len(received) == 0):
           # Reveicing 0 bytes when select indicates ready for read, the connection has been closed.
           self.keep_going = False;
           return None
+        first = False
     except:
       return None
 
