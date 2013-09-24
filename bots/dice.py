@@ -1,15 +1,10 @@
-#!/bin/python
+#!/usr/bin/env python
 #
 # Bot that rolls dices when you send him bang commands.
 #
 
-from optparse import OptionParser
-
 import logging
-import sys
-import threading
 import time
-
 import mumble
 
 import random
