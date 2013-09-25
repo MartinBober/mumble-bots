@@ -74,21 +74,8 @@ class DiceBot(mumble.CommandBot):
         termResult = termResult-int(subTerm)
       result = result+termResult
     return result
-
-  def on_bang(self, from_user, *args):
-    """Callback method for bang messages.
-    
-    'Bang messages' are messages that start
-    with a '!' character and are treated
-    as commands.
-    
-    Currently interpreted commands are:
-    * !roll for general purpose dice rolls
-    * !roll_sr for Shadowrun 3 success tests
-    
-    """
-    print "Command: " + str(args)
-    success = False
+  
+  def _on_roll(self, from_user, args):
     if (len(args) > 1) and (args[0] == "roll"):
       splitarg = args[1].lower().split("d")
       if len(splitarg) == 2:
@@ -105,10 +92,11 @@ class DiceBot(mumble.CommandBot):
             strBuf = strBuf + "on %d D%d" %(nDice, dDimension)
             print strBuf
             self.send_message_channel(from_user, strBuf)
-            success = True
         except exceptions.ValueError:
           self.send_message(from_user, "Error in command.")
           return
+  
+  def _on_roll_sr(self, from_user, args):
     if (len(args) > 2) and (args[0] == "roll_sr"):
       try:
         targetNumber = self._evalNumber(args[1])
@@ -131,7 +119,6 @@ class DiceBot(mumble.CommandBot):
               successes += 1
             strBuf = strBuf + str(resultSum)+ " "
             results += [resultSum]
-          success = True
           if (successes > 0) and (not (fails == len(results))):
             self.send_message_channel(from_user, ("You made it with %d successes on %d against %d. Results: " % (successes, nDice, targetNumber)) + strBuf)
           else:
@@ -141,5 +128,27 @@ class DiceBot(mumble.CommandBot):
               self.send_message_channel(from_user, ("You failed on %d against %d. Results: " % (nDice, targetNumber)) + strBuf)
       except exceptions.ValueError:
           self.send_message(from_user, "Error in command.")
+
+
+  def on_bang(self, from_user, *args):
+    """Callback method for bang messages.
+    
+    'Bang messages' are messages that start
+    with a '!' character and are treated
+    as commands.
+    
+    Currently interpreted commands are:
+    * !roll for general purpose dice rolls
+    * !roll_sr for Shadowrun 3 success tests
+    
+    """
+    print "Command: " + str(args)
+    success = False
+    if args[0] == "roll":
+      self._on_roll(from_user, args)
+      success = True
+    if args[0] == "roll_sr":
+      self._on_roll_sr(from_user, args)
+      success = True
     if not success:
       self.send_message(from_user, "Error in commad.")
