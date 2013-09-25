@@ -76,6 +76,7 @@ class DiceBot(mumble.CommandBot):
     return result
   
   def _on_roll(self, from_user, args):
+    """Private method for making general purpose dice rolls."""
     if (len(args) > 1) and (args[0] == "roll"):
       splitarg = args[1].lower().split("d")
       if len(splitarg) == 2:
@@ -99,6 +100,7 @@ class DiceBot(mumble.CommandBot):
       self.send_message(from_user, "Error in command. Say \"!help roll\" for help.")
   
   def _on_roll_sr(self, from_user, args):
+    """Private method for making Shadowrun 3 success tests."""
     if (len(args) > 2) and (args[0] == "roll_sr"):
       try:
         targetNumber = self._evalNumber(args[1])
