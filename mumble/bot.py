@@ -164,21 +164,15 @@ class Bot(object):
     self.connection.join()
 
   def send_message(self, user, message):
-    if user is None:
-      destinations = []
-      for u in self.state.root.get_users():
-        destinations += [u.session]
-      self.connection.send_message(destination = destinations, message=message)
-    else:
-      self.connection.send_message(destination = [user.session], message = message)
+    self.connection.send_message(destination = [user.session], message = message)
 
-  # Sends a massage to all users in the same channel as user
   def send_message_channel(self, user, message):
+    """Sends a massage to all users in the same channel as user."""
     user_in = self.user_is_in_subchannel(user, self.state.root)
     if user_in is None:
-      print "Error! Subchannel belonging to user not found!"
+      LOGGER.error("Subchannel belonging to user not found!")
     else:
-      print "Replying to channel " + str(user_in.id)
+      LOGGER.debug("Replying to channel " + str(user_in.id))
       destinations = []
       for u in user_in.get_users():
         destinations += [u.session]
@@ -186,6 +180,7 @@ class Bot(object):
       
 
   def user_is_in_subchannel(self, user, channel):
+    """Return True if user is in any subchannel of channel (or channel itself)"""
     if user in channel.get_users():
       return channel
     subchannels = channel.get_children()
@@ -258,5 +253,6 @@ class Bot(object):
     pass
   def on_message_trees(self, from_user, tree_ids, message):
     pass
-  def on_socket_close():
+  def on_socket_close(self):
+    """Called when the used socket was closed."""
     pass
