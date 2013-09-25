@@ -93,8 +93,10 @@ class DiceBot(mumble.CommandBot):
             print strBuf
             self.send_message_channel(from_user, strBuf)
         except exceptions.ValueError:
-          self.send_message(from_user, "Error in command.")
+          self.send_message(from_user, "Error in command. Say \"!help roll\" for help.")
           return
+    else:
+      self.send_message(from_user, "Error in command. Say \"!help roll\" for help.")
   
   def _on_roll_sr(self, from_user, args):
     if (len(args) > 2) and (args[0] == "roll_sr"):
@@ -127,7 +129,18 @@ class DiceBot(mumble.CommandBot):
             else:
               self.send_message_channel(from_user, ("You failed on %d against %d. Results: " % (nDice, targetNumber)) + strBuf)
       except exceptions.ValueError:
-          self.send_message(from_user, "Error in command.")
+          self.send_message(from_user, "Error in command. Say \"!help roll_sr\" for help.")
+    else:
+      self.send_message(from_user, "Error in command. Say \"!help roll_sr\" for help.")
+  
+  def _on_help(self, from_user, args):
+    if len(args) < 2:
+      self.send_message(from_user, "Available commands are \"!roll\" for general purpose dice rolls and \"!roll_sr\" for Shadowrun 3 success tests.")
+    else:
+      if args[1] == "roll":
+        self.send_message(from_user, "Usage: \"!roll nDd\". Example: \"!roll 2+1D6\" rolls 3 D6.")
+      if args[1] == "roll_sr":
+        self.send_message(from_user, "Usage: \"!roll_sr target_number dice_pool\". Example: \"!roll_sr 2+1 6-1\" makes a test against target number 3 with 5 dices.")
 
 
   def on_bang(self, from_user, *args):
@@ -140,6 +153,7 @@ class DiceBot(mumble.CommandBot):
     Currently interpreted commands are:
     * !roll for general purpose dice rolls
     * !roll_sr for Shadowrun 3 success tests
+    * !help explains the command syntax to users
     
     """
     print "Command: " + str(args)
@@ -150,5 +164,8 @@ class DiceBot(mumble.CommandBot):
     if args[0] == "roll_sr":
       self._on_roll_sr(from_user, args)
       success = True
+    if args[0] == "help":
+      self._on_help(from_user, args)
+      success = True
     if not success:
-      self.send_message(from_user, "Error in commad.")
+      self.send_message(from_user, "Error in command. Say \"!help\" for help.")
