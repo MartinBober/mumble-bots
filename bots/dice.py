@@ -124,12 +124,12 @@ class DiceBot(mumble.CommandBot):
             strBuf = strBuf + str(resultSum)+ " "
             results += [resultSum]
           if (successes > 0) and (not (fails == len(results))):
-            self.send_message_channel(from_user, ("You made it with %d successes on %d against %d. Results: " % (successes, nDice, targetNumber)) + strBuf)
+            self.send_message_channel(from_user, self.state.users_by_id[from_user.id].name + (" made it with %d successes on %d against %d. Results: " % (successes, nDice, targetNumber)) + strBuf)
           else:
             if fails == len(results):
-              self.send_message_channel(from_user, "CATASTROPHIC FAILURE. It was nice knowing you, Chummer. Results: " + strBuf)
+              self.send_message_channel(from_user, "CATASTROPHIC FAILURE. It was nice knowing you, " + self.state.users_by_id[from_user.id].name + ". Results: " + strBuf)
             else:
-              self.send_message_channel(from_user, ("You failed on %d against %d. Results: " % (nDice, targetNumber)) + strBuf)
+              self.send_message_channel(from_user, self.state.users_by_id[from_user.id].name + (" failed on %d against %d. Results: " % (nDice, targetNumber)) + strBuf)
       except exceptions.ValueError:
           self.send_message(from_user, "Error in command. Say \"!help roll_sr\" for help.")
     else:
