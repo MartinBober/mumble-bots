@@ -87,7 +87,7 @@ class DiceBot(mumble.CommandBot):
             results = []
             for i in range(nDice):
               results += [random.randint(1,dDimension)]
-            strBuf = "Results: "
+            strBuf = "Results (" + self.state.users_by_id[from_user.id].name + "): "
             for result in results:
               strBuf = strBuf + str(result) + " "
             strBuf = strBuf + "on %d D%d" %(nDice, dDimension)
