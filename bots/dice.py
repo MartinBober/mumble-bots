@@ -101,7 +101,7 @@ class DiceBot(mumble.CommandBot):
   
   def _on_roll_sr(self, from_user, args):
     """Private method for making Shadowrun 3 success tests."""
-    if (len(args) > 2) and (args[0] == "roll_sr"):
+    if (len(args) > 2):
       try:
         targetNumber = self._evalNumber(args[1])
         nDice = self._evalNumber(args[2])
@@ -135,14 +135,55 @@ class DiceBot(mumble.CommandBot):
     else:
       self.send_message(from_user, "Error in command. Say \"!help roll_sr\" for help.")
   
+  def _on_sr_open(self, from_user, args):
+    if len(args) > 1:
+      try:
+        nDice = self._evalNumber(args[1])
+        maxResult = 0
+        strBuf = ""
+        for i in range(nDice):
+          result = random.randint(1,6)
+          resultSum = result
+          while result == 6:
+            result = random.randint(1,6)
+            resultSum += result
+          if resultSum > maxResult:
+            maxResult = resultSum
+          strBuf += str(resultSum) + " "
+        self.send_message_channel(from_user, from_user.name + (" scored %d in an open test on %d D6. Results:") % (maxResult, nDice) + strBuf)
+      except exceptions.ValueError:
+          self.send_message(from_user, "Error in command. Say \"!help sr_open\" for help.")
+    else:
+      self.send_message(from_user, "Error in command. Say \"!help sr_open\" for help.")
+
+  def _on_sr_ini(self, from_user, args):
+    if len(args) > 2:
+      try:
+        iniBase = self._evalNumber(args[1])
+        nDice = self._evalNumber(args[2])
+        result = 0
+        for i in range(nDice):
+          result += random.randint(1,6)
+        self.send_message_channel(from_user, from_user.name + (" has initiative %d (base %d)") % (result+iniBase, iniBase))
+      except exceptions.ValueError:
+          self.send_message(from_user, "Error in command. Say \"!help sr_ini\" for help.")
+    else:
+      self.send_message(from_user, "Error in command. Say \"!help sr_ini\" for help.")
+  
   def _on_help(self, from_user, args):
     if len(args) < 2:
-      self.send_message(from_user, "Available commands are \"!roll\" for general purpose dice rolls and \"!roll_sr\" for Shadowrun 3 success tests.")
+      self.send_message(from_user, "Available commands are \"!roll\" for general purpose dice rolls and \"!roll_sr\", \"!sr\", \"!sr_open\" or \"!sr_ini\" for Shadowrun 3 related rolls.")
     else:
       if args[1] == "roll":
         self.send_message(from_user, "Usage: \"!roll nDd\". Example: \"!roll 2+1D6\" rolls 3 D6.")
       if args[1] == "roll_sr":
         self.send_message(from_user, "Usage: \"!roll_sr target_number dice_pool\". Example: \"!roll_sr 2+1 6-1\" makes a test against target number 3 with 5 dices.")
+      if args[1] == "sr":
+        self.send_message(from_user, "Usage: \"!sr target_number dice_pool\". Example: \"!sr 2+1 6-1\" makes a test against target number 3 with 5 dices.")
+      if args[1] == "sr_open":
+        self.send_message(from_user, "Usage: \"!sr_open dice_pool\". Example: \"!sr_open 6-1\" makes an open test with 5 dices.")
+      if args[1] == "sr_ini":
+        self.send_message(from_user, "Usage: \"!sr_ini ini_base nDice\". Example: \"!sr_ini 5-1 2\" makes an initiative roll with base 4 plus two D6.")
 
 
   def on_bang(self, from_user, *args):
@@ -154,7 +195,9 @@ class DiceBot(mumble.CommandBot):
     
     Currently interpreted commands are:
     * !roll for general purpose dice rolls
-    * !roll_sr for Shadowrun 3 success tests
+    * !roll_sr or !sr for Shadowrun 3 success tests
+    * !sr_ini for Shadowrun initiative rolls
+    * !sr_open for Shadowrun open rolls
     * !help explains the command syntax to users
     
     """
@@ -163,8 +206,14 @@ class DiceBot(mumble.CommandBot):
     if args[0] == "roll":
       self._on_roll(from_user, args)
       success = True
-    if args[0] == "roll_sr":
+    if (args[0] == "roll_sr") or (args[0] == "sr"):
       self._on_roll_sr(from_user, args)
+      success = True
+    if (args[0] == "sr_open"):
+      self._on_sr_open(from_user, args)
+      success = True
+    if (args[0] == "sr_ini"):
+      self._on_sr_ini(from_user, args)
       success = True
     if args[0] == "help":
       self._on_help(from_user, args)
