@@ -170,9 +170,38 @@ class DiceBot(mumble.CommandBot):
     else:
       self.send_message(from_user, "Error in command. Say \"!help sr_ini\" for help.")
   
+  def _on_vamp(self, from_user, args):
+    """Private method for making Vampire success tests."""
+    if (len(args) > 2):
+      try:
+        targetNumber = self._evalNumber(args[1])
+        nDice = self._evalNumber(args[2])
+        if not ((nDice < 1) or (targetNumber < 2)):
+          strBuf = ""
+          fails = 0
+          successes = 0
+          for i in range(nDice):
+            result = random.randint(1,10)
+            if result == 1:
+              fails += 1
+            if result >= targetNumber:
+              successes += 1
+            strBuf = strBuf + str(result)+ " "
+          if (successes > 0) and (fails < successes):
+            self.send_message_channel(from_user, from_user.name + (" made it with %d successes on %d against %d. Results: " % (successes-fails, nDice, targetNumber)) + strBuf)
+          else:
+            if (fails > 0) and (successes == 0) :
+              self.send_message_channel(from_user, "CATASTROPHIC FAILURE. It was nice knowing you, " + from_user.name + ". Results: " + strBuf)
+            else:
+              self.send_message_channel(from_user, from_user.name + (" failed on %d against %d. Results: " % (nDice, targetNumber)) + strBuf)
+      except exceptions.ValueError:
+          self.send_message(from_user, "Error in command. Say \"!help vamp\" for help.")
+    else:
+      self.send_message(from_user, "Error in command. Say \"!help vamp\" for help.")
+  
   def _on_help(self, from_user, args):
     if len(args) < 2:
-      self.send_message(from_user, "Available commands are \"!roll\" for general purpose dice rolls and \"!roll_sr\", \"!sr\", \"!sr_open\" or \"!sr_ini\" for Shadowrun 3 related rolls.")
+      self.send_message(from_user, "Available commands are \"!roll\" for general purpose dice rolls and \"!roll_sr\", \"!sr\", \"!sr_open\" or \"!sr_ini\" for Shadowrun 3 related rolls. Use !vamp for Vampire rolls.")
     else:
       if args[1] == "roll":
         self.send_message(from_user, "Usage: \"!roll nDd\". Example: \"!roll 2+1D6\" rolls 3 D6.")
@@ -184,6 +213,8 @@ class DiceBot(mumble.CommandBot):
         self.send_message(from_user, "Usage: \"!sr_open dice_pool\". Example: \"!sr_open 6-1\" makes an open test with 5 dices.")
       if args[1] == "sr_ini":
         self.send_message(from_user, "Usage: \"!sr_ini ini_base nDice\". Example: \"!sr_ini 5-1 2\" makes an initiative roll with base 4 plus two D6.")
+      if args[1] == "vamp":
+        self.send_message(from_user, "Usage: \"!vamp target_number dice_pool\". Example: \"!vamp 2+1 6-1\" makes a test against target number 3 with 5 dices.")
 
 
   def on_bang(self, from_user, *args):
@@ -198,6 +229,7 @@ class DiceBot(mumble.CommandBot):
     * !roll_sr or !sr for Shadowrun 3 success tests
     * !sr_ini for Shadowrun initiative rolls
     * !sr_open for Shadowrun open rolls
+    * !vamp for Vampire rolls
     * !help explains the command syntax to users
     
     """
@@ -214,6 +246,9 @@ class DiceBot(mumble.CommandBot):
       success = True
     if (args[0] == "sr_ini"):
       self._on_sr_ini(from_user, args)
+      success = True
+    if (args[0] == "vamp"):
+      self._on_vamp(from_user, args)
       success = True
     if args[0] == "help":
       self._on_help(from_user, args)
