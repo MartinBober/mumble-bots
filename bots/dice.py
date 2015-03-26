@@ -10,6 +10,9 @@ import exceptions
 
 import socket
 
+import re
+import urllib2
+
 class DiceBot(mumble.CommandBot):
   """Implements a bot that makes fair dice rolls for role-playing games.
   
@@ -51,7 +54,7 @@ class DiceBot(mumble.CommandBot):
         connected = False
         time.sleep(5)
 
-  def _evalNumber(self,toEval):
+  def _evalNumber(self, from_user, toEval):
     """Private method that evaluates a term including "+" and "-".
     
     This method evaluates a numeric term containing the operations
@@ -66,6 +69,15 @@ class DiceBot(mumble.CommandBot):
     * _evalNumber(2) return 2
     
     """
+    char_url = self._get_char_url(from_user.comment)
+    if char_url:
+      for attribute in re.findall(r"[a-z_]+", toEval):
+        attribute_value = self._get_attribute(char_url, attribute)
+        if attribute_value:
+          toEval = toEval.replace(attribute, attribute_value)
+        else:
+          self.send_message(from_user, "Attribute \"%s\" not found in char at \"%s\"" % (attribute, char_url))
+
     result = 0
     for term in toEval.split("+"):
       subTerms = term.split("-")
@@ -74,6 +86,19 @@ class DiceBot(mumble.CommandBot):
         termResult = termResult-int(subTerm)
       result = result+termResult
     return result
+
+  def _get_char_url(self, comment):
+    results = re.findall(r"https://charxchange.com/chars/[0-9]+", comment)
+    if len(results) > 0:
+      return results[0]
+    else:
+      return None
+  
+  def _get_attribute(self, char_url, attribute):
+    try:
+      return urllib2.urlopen(char_url+"/attrs/"+attribute).read()
+    except urllib2.HTTPError:
+      return None
   
   def _on_roll(self, from_user, args):
     """Private method for making general purpose dice rolls."""
@@ -81,8 +106,8 @@ class DiceBot(mumble.CommandBot):
       splitarg = args[1].lower().split("d")
       if len(splitarg) == 2:
         try:
-          nDice = self._evalNumber(splitarg[0])
-          dDimension = self._evalNumber(splitarg[1])
+          nDice = self._evalNumber(from_user, splitarg[0])
+          dDimension = self._evalNumber(from_user, splitarg[1])
           if not ((nDice < 1) or (dDimension < 1)):
             results = []
             for i in range(nDice):
@@ -103,8 +128,8 @@ class DiceBot(mumble.CommandBot):
     """Private method for making Shadowrun 3 success tests."""
     if (len(args) > 2):
       try:
-        targetNumber = self._evalNumber(args[1])
-        nDice = self._evalNumber(args[2])
+        targetNumber = self._evalNumber(from_user, args[1])
+        nDice = self._evalNumber(from_user, args[2])
         if not ((nDice < 1) or (targetNumber < 2)):
           results = []
           strBuf = ""
@@ -140,7 +165,7 @@ class DiceBot(mumble.CommandBot):
     if (len(args) > 1):
       explode = "--explode" in args
       try:
-        nDice = self._evalNumber(args[1])
+        nDice = self._evalNumber(from_user, args[1])
         if not (nDice < 1):
           results = []
           strBuf = ""
@@ -182,7 +207,7 @@ class DiceBot(mumble.CommandBot):
   def _on_sr_open(self, from_user, args):
     if len(args) > 1:
       try:
-        nDice = self._evalNumber(args[1])
+        nDice = self._evalNumber(from_user, args[1])
         maxResult = 0
         strBuf = ""
         for i in range(nDice):
@@ -203,8 +228,8 @@ class DiceBot(mumble.CommandBot):
   def _on_sr_ini(self, from_user, args):
     if len(args) > 2:
       try:
-        iniBase = self._evalNumber(args[1])
-        nDice = self._evalNumber(args[2])
+        iniBase = self._evalNumber(from_user, args[1])
+        nDice = self._evalNumber(from_user, args[2])
         result = 0
         for i in range(nDice):
           result += random.randint(1,6)
@@ -218,8 +243,8 @@ class DiceBot(mumble.CommandBot):
     """Private method for making Vampire success tests."""
     if (len(args) > 2):
       try:
-        targetNumber = self._evalNumber(args[1])
-        nDice = self._evalNumber(args[2])
+        targetNumber = self._evalNumber(from_user, args[1])
+        nDice = self._evalNumber(from_user, args[2])
         if not ((nDice < 1) or (targetNumber < 2)):
           strBuf = ""
           fails = 0
