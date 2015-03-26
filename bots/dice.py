@@ -138,6 +138,7 @@ class DiceBot(mumble.CommandBot):
   def _on_roll_sr5(self, from_user, args):
     """Private method for making Shadowrun 5 success tests."""
     if (len(args) > 1):
+      explode = "--explode" in args
       try:
         nDice = self._evalNumber(args[1])
         if not (nDice < 1):
@@ -146,21 +147,31 @@ class DiceBot(mumble.CommandBot):
           fails = 0
           successes = 0
           for i in range(nDice):
-            result = random.randint(1,6)
-            if result == 1:
-              fails += 1
-            if result >= 5:
-              successes += 1
-            strBuf = strBuf + str(result)+ " "
-            results += [result]
-            glitched = 2*fails > nDice
+            result = 6
+            while result == 6:
+              result = random.randint(1,6)
+              if result == 1:
+                fails += 1
+              if result >= 5:
+                successes += 1
+              strBuf = strBuf + str(result)+ " "
+              results += [result]
+              if not explode:
+                break
+          glitched = 2*fails > nDice
           if not glitched:
-            self.send_message_channel(from_user, from_user.name + (" has %d hits on %d dices. Results: " % (successes, nDice)) + strBuf)
+            msg = " has %d hits on %d dices. Results: "
+            if explode:
+              msg = " has %d hits on %d dices with exploding sixes. Results: "
+            self.send_message_channel(from_user, from_user.name + (msg % (successes, nDice)) + strBuf)
           else:
             if successes == 0:
               self.send_message_channel(from_user, "CRITICAL GLITCH. It was nice knowing you, " + from_user.name + ". Results: " + strBuf)
             else:
-              self.send_message_channel(from_user, from_user.name + (" glitched but has %d hits on %d dices. Results: " % (successes, nDice)) + strBuf)
+              msg = " glitched but has %d hits on %d dices. Results: "
+              if explode:
+                msg = " glitched but has %d hits on %d dices with exploding sixes. Results: "
+              self.send_message_channel(from_user, from_user.name + (msg % (successes, nDice)) + strBuf)
         else:
           self.send_message(from_user, from_user.name + " cannot roll with a pool of %d." % (nDice,))
       except exceptions.ValueError:
