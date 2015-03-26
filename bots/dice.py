@@ -166,6 +166,14 @@ class DiceBot(mumble.CommandBot):
       explode = "--explode" in args
       try:
         nDice = self._evalNumber(from_user, args[1])
+        char_url = self._get_char_url(from_user.comment)
+        if char_url and not "--no-dmg" in args:
+          physical_dmg  = self._get_attribute(char_url, "physical_damage_current")
+          if physical_dmg:
+            nDice -= int(physical_dmg)/3
+          stun_dmg = self._get_attribute(char_url, "stun_damage_current")
+          if stun_dmg:
+            nDice -= int(stun_dmg)/3
         if not (nDice < 1):
           results = []
           strBuf = ""
