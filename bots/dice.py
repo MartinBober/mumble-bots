@@ -69,7 +69,11 @@ class DiceBot(mumble.CommandBot):
     * _evalNumber(2) return 2
     
     """
-    char_url = self._get_char_url(from_user.comment)
+    char_url = None
+    try:
+      char_url = self._get_char_url(from_user.comment)
+    except AttributeError:
+      pass
     if char_url:
       for attribute in re.findall(r"[a-z_]+", toEval):
         attribute_value = self._get_attribute(char_url, attribute)
@@ -166,7 +170,11 @@ class DiceBot(mumble.CommandBot):
       explode = "--explode" in args
       try:
         nDice = self._evalNumber(from_user, args[1])
-        char_url = self._get_char_url(from_user.comment)
+        char_url = None
+        try:
+          char_url = self._get_char_url(from_user.comment)
+        except AttributeError:
+          pass
         if char_url and not "--no-dmg" in args:
           physical_dmg  = self._get_attribute(char_url, "physical_damage_current")
           if physical_dmg:
