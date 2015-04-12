@@ -253,7 +253,37 @@ class DiceBot(mumble.CommandBot):
       except exceptions.ValueError:
           self.send_message(from_user, "Error in command. Say \"!help sr_ini\" for help.")
     else:
-      self.send_message(from_user, "Error in command. Say \"!help sr_ini\" for help.")
+      char_url = None
+      try:
+        char_url = self._get_char_url(from_user.comment)
+      except AttributeError:
+        pass
+      if char_url:
+        mode = ""
+        if len(args) > 1:
+          mode = args[1] + "_"
+        try:
+          base = self._get_attribute(char_url, "initiative_"+mode+"base")
+          dice = self._get_attribute(char_url, "initiative_"+mode+"dice")
+          if base and dice:
+            base = int(base)
+            dice = int(dice)
+            result = base
+            for i in range(dice):
+              result += random.randint(1,6)
+            physical_dmg  = self._get_attribute(char_url, "physical_damage_current")
+            if physical_dmg:
+              result -= int(physical_dmg)/3
+            stun_dmg = self._get_attribute(char_url, "stun_damage_current")
+            if stun_dmg:
+              result -= int(stun_dmg)/3
+            self.send_message(from_user, "%s has initiative %d (on %d + %d D6)" % (from_user.name, result, base, dice))
+          else:
+            self.send_message(from_user, "Error. %s has no attributes %s and %s." % (char_url, "initiative_"+mode+"base", "initiative_"+mode+"dice"))
+        except ValueError:
+          self.send_message(from_user, "Error in command. Say \"!help sr_ini\" for help.")
+      else:
+        self.send_message(from_user, "Error in command. Say \"!help sr_ini\" for help.")
   
   def _on_vamp(self, from_user, args):
     """Private method for making Vampire success tests."""
