@@ -277,7 +277,7 @@ class DiceBot(mumble.CommandBot):
             stun_dmg = self._get_attribute(char_url, "stun_damage_current")
             if stun_dmg:
               result -= int(stun_dmg)/3
-            self.send_message(from_user, "%s has initiative %d (on %d + %d D6)" % (from_user.name, result, base, dice))
+            self.send_message_channel(from_user, "%s has initiative %d (on %d + %d D6)" % (from_user.name, result, base, dice))
           else:
             self.send_message(from_user, "Error. %s has no attributes %s and %s." % (char_url, "initiative_"+mode+"base", "initiative_"+mode+"dice"))
         except ValueError:
