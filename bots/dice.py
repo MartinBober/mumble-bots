@@ -201,17 +201,17 @@ class DiceBot(mumble.CommandBot):
                 break
           glitched = 2*fails > nDice
           if not glitched:
-            msg = " has %d hits on %d dices. Results: "
+            msg = " has %d hits on %d dice. Results: "
             if explode:
-              msg = " has %d hits on %d dices with exploding sixes. Results: "
+              msg = " has %d hits on %d dice with exploding sixes. Results: "
             self.send_message_channel(from_user, from_user.name + (msg % (successes, nDice)) + strBuf)
           else:
             if successes == 0:
               self.send_message_channel(from_user, "CRITICAL GLITCH. It was nice knowing you, " + from_user.name + ". Results: " + strBuf)
             else:
-              msg = " glitched but has %d hits on %d dices. Results: "
+              msg = " glitched but has %d hits on %d dice. Results: "
               if explode:
-                msg = " glitched but has %d hits on %d dices with exploding sixes. Results: "
+                msg = " glitched but has %d hits on %d dice with exploding sixes. Results: "
               self.send_message_channel(from_user, from_user.name + (msg % (successes, nDice)) + strBuf)
         else:
           self.send_message(from_user, from_user.name + " cannot roll with a pool of %d." % (nDice,))
@@ -321,17 +321,17 @@ class DiceBot(mumble.CommandBot):
       if args[1] == "roll":
         self.send_message(from_user, "Usage: \"!roll nDd\". Example: \"!roll 2+1D6\" rolls 3 D6.")
       if args[1] == "roll_sr":
-        self.send_message(from_user, "Usage: \"!roll_sr target_number dice_pool\". Example: \"!roll_sr 2+1 6-1\" makes a test against target number 3 with 5 dices.")
+        self.send_message(from_user, "Usage: \"!roll_sr target_number dice_pool\". Example: \"!roll_sr 2+1 6-1\" makes a test against target number 3 with 5 dice.")
       if args[1] == "sr":
-        self.send_message(from_user, "Usage: \"!sr target_number dice_pool\". Example: \"!sr 2+1 6-1\" makes a test against target number 3 with 5 dices.")
+        self.send_message(from_user, "Usage: \"!sr target_number dice_pool\". Example: \"!sr 2+1 6-1\" makes a test against target number 3 with 5 dice.")
       if args[1] == "sr_open":
-        self.send_message(from_user, "Usage: \"!sr_open dice_pool\". Example: \"!sr_open 6-1\" makes an open test with 5 dices.")
+        self.send_message(from_user, "Usage: \"!sr_open dice_pool\". Example: \"!sr_open 6-1\" makes an open test with 5 dice.")
       if args[1] == "sr_ini":
         self.send_message(from_user, "Usage: \"!sr_ini ini_base nDice\". Example: \"!sr_ini 5-1 2\" makes an initiative roll with base 4 plus two D6.")
       if args[1] == "vamp":
-        self.send_message(from_user, "Usage: \"!vamp target_number dice_pool\". Example: \"!vamp 2+1 6-1\" makes a test against target number 3 with 5 dices.")
+        self.send_message(from_user, "Usage: \"!vamp target_number dice_pool\". Example: \"!vamp 2+1 6-1\" makes a test against target number 3 with 5 dice.")
       if args[1] == "sr5":
-        self.send_message(from_user, "Usage: \"!sr5 dice_pool\". Example: \"!sr5 4+5-1\" makes a roll against 8 dices.")
+        self.send_message(from_user, "Usage: \"!sr5 dice_pool\". Example: \"!sr5 4+5-1\" makes a roll against 8 dice.")
 
 
   def on_bang(self, from_user, *args):
