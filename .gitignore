@@ -36,3 +36,6 @@ nosetests.xml
 
 # Tempo files
 *~
+
+# PyCharm
+.idea
