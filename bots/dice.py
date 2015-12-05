@@ -10,6 +10,48 @@ import re
 import urllib2
 
 
+class ParsedArguments:
+
+    def __init__(self, args):
+        self._normal_args = []
+        self._special_args = {}
+        for arg in args:
+            if arg[:2] == "--":
+                value = True
+                equals_pos = arg.find("=")
+                key = args[2:]
+                if equals_pos > 0:
+                    value = arg[equals_pos + 1:]
+                    key = arg[2:equals_pos]
+                self._special_args[key] = value
+            else:
+                self._normal_args += [arg]
+
+    def __getitem__(self, item):
+        if type(item) is int:
+            return self._normal_args[item]
+        else:
+            if item in self._special_args:
+                return self._special_args[item]
+            else:
+                return False
+
+    def __len__(self):
+        return len(self._normal_args)
+
+    def __contains__(self, item):
+        return item in self._special_args
+
+
+class CommandException:
+
+    def __init__(self, error_msg):
+        self._error_msg = error_msg
+
+    def __str__(self):
+        return self._error_msg
+
+
 class DiceBot(mumble.CommandBot):
     """Implements a bot that makes fair dice rolls for role-playing games.
   
@@ -29,6 +71,14 @@ class DiceBot(mumble.CommandBot):
     def __init__(self):
         """Init method. Only calls CommandBot's __init__ method."""
         mumble.CommandBot.__init__(self)
+        self._implemented_commands = {
+            "roll": self._on_roll,
+            "roll_sr": self._on_roll_sr,
+            "sr5": self._on_roll_sr5,
+            "sr_open": self._on_sr_open,
+            "sr_ini": self._on_sr_ini,
+            "vamp": self._on_vamp
+        }
 
     def on_socket_closed(self):
         """Callback method for socket_closed event.
@@ -51,7 +101,7 @@ class DiceBot(mumble.CommandBot):
                 connected = False
                 time.sleep(5)
 
-    def _eval_number(self, from_user, to_eval):
+    def _eval_number(self, from_user, args, to_eval):
         """Private method that evaluates a term including "+" and "-".
     
     This method evaluates a numeric term containing the operations
@@ -68,7 +118,7 @@ class DiceBot(mumble.CommandBot):
     """
         char_url = None
         try:
-            char_url = self._get_char_url(from_user.comment)
+            char_url = self._get_char_url(args, from_user.comment)
         except AttributeError:
             pass
         if char_url:
@@ -89,7 +139,9 @@ class DiceBot(mumble.CommandBot):
         return result
 
     @staticmethod
-    def _get_char_url(comment):
+    def _get_char_url(args, comment):
+        if "char-url" in args:
+            return args["char-url"]
         results = re.findall(r"https://charxchange.com/chars/[0-9]+", comment)
         if len(results) > 0:
             return results[0]
@@ -105,229 +157,230 @@ class DiceBot(mumble.CommandBot):
 
     def _on_roll(self, from_user, args):
         """Private method for making general purpose dice rolls."""
-        if (len(args) > 1) and (args[0] == "roll"):
-            split_arg = args[1].lower().split("d")
-            if len(split_arg) == 2:
-                try:
-                    n_dice = self._eval_number(from_user, split_arg[0])
-                    d_dimension = self._eval_number(from_user, split_arg[1])
-                    if not ((n_dice < 1) or (d_dimension < 1)):
-                        results = []
-                        for i in range(n_dice):
-                            results += [random.randint(1, d_dimension)]
-                        str_buf = "Results (" + from_user.name + "): "
-                        for result in results:
-                            str_buf = str_buf + str(result) + " "
-                        str_buf += "on %d D%d" % (n_dice, d_dimension)
-                        print str_buf
-                        self.send_message_channel(from_user, str_buf)
-                except exceptions.ValueError:
-                    self.send_message(from_user, "Error in command. Say \"!help roll\" for help.")
-                    return
-        else:
-            self.send_message(from_user, "Error in command. Say \"!help roll\" for help.")
+        if len(args) == 0:
+            raise CommandException("Error in command. Say \"!help roll\" for help.")
+
+        split_arg = args[0].lower().split("d")
+        if len(split_arg) != 2:
+            raise CommandException("Error in command. Say \"!help roll\" for help.")
+
+        try:
+            n_dice = self._eval_number(from_user, args, split_arg[0])
+            d_dimension = self._eval_number(from_user, args, split_arg[1])
+            if not ((n_dice < 1) or (d_dimension < 1)):
+                results = []
+                for i in range(n_dice):
+                    results += [random.randint(1, d_dimension)]
+                str_buf = "Results (" + from_user.name + "): "
+                for result in results:
+                    str_buf = str_buf + str(result) + " "
+                str_buf += "on %d D%d" % (n_dice, d_dimension)
+                print str_buf
+                self.send_message_channel(from_user, str_buf)
+        except exceptions.ValueError:
+            raise CommandException("Error in command. Say \"!help roll\" for help.")
 
     def _on_roll_sr(self, from_user, args):
         """Private method for making Shadowrun 3 success tests."""
-        if len(args) > 2:
-            try:
-                target_number = self._eval_number(from_user, args[1])
-                n_dice = self._eval_number(from_user, args[2])
-                if not ((n_dice < 1) or (target_number < 2)):
-                    results = []
-                    str_buf = ""
-                    fails = 0
-                    successes = 0
-                    for i in range(n_dice):
-                        result = random.randint(1, 6)
-                        result_sum = result
-                        # Rule of 6
-                        while result == 6:
-                            result = random.randint(1, 6)
-                            result_sum += result
-                        if result_sum == 1:
-                            fails += 1
-                        if result_sum >= target_number:
-                            successes += 1
-                        str_buf = str_buf + str(result_sum) + " "
-                        results += [result_sum]
-                    if (successes > 0) and (not (fails == len(results))):
-                        self.send_message_channel(from_user, from_user.name + (
-                            " made it with %d successes on %d against %d. Results: " % (
-                                successes, n_dice, target_number)) + str_buf)
-                    else:
-                        if fails == len(results):
-                            self.send_message_channel(from_user,
-                                                      "CATASTROPHIC FAILURE. It was nice knowing you, " +
-                                                      from_user.name + ". Results: " + str_buf)
-                        else:
-                            self.send_message_channel(from_user, from_user.name + (
-                                " failed on %d against %d. Results: " % (n_dice, target_number)) + str_buf)
-            except exceptions.ValueError:
-                self.send_message(from_user, "Error in command. Say \"!help roll_sr\" for help.")
-        else:
-            self.send_message(from_user, "Error in command. Say \"!help roll_sr\" for help.")
+        if len(args) == 0:
+            raise CommandException("Error in command. Say \"!help roll_sr\" for help.")
 
-    def _on_roll_sr5(self, from_user, args):
-        """Private method for making Shadowrun 5 success tests."""
-        if len(args) > 1:
-            explode = "--explode" in args
-            try:
-                n_dice = self._eval_number(from_user, args[1])
-                char_url = None
-                try:
-                    char_url = self._get_char_url(from_user.comment)
-                except AttributeError:
-                    pass
-                if char_url and "--no-dmg" not in args:
-                    physical_dmg = self._get_attribute(char_url, "physical_damage_current")
-                    if physical_dmg:
-                        n_dice -= int(physical_dmg) / 3
-                    stun_dmg = self._get_attribute(char_url, "stun_damage_current")
-                    if stun_dmg:
-                        n_dice -= int(stun_dmg) / 3
-                if not (n_dice < 1):
-                    results = []
-                    str_buf = ""
-                    fails = 0
-                    successes = 0
-                    for i in range(n_dice):
-                        result = 6
-                        while result == 6:
-                            result = random.randint(1, 6)
-                            if result == 1:
-                                fails += 1
-                            if result >= 5:
-                                successes += 1
-                            str_buf = str_buf + str(result) + " "
-                            results += [result]
-                            if not explode:
-                                break
-                    glitched = 2 * fails > n_dice
-                    if not glitched:
-                        msg = " has %d hits on %d dice. Results: "
-                        if explode:
-                            msg = " has %d hits on %d dice with exploding sixes. Results: "
-                        self.send_message_channel(from_user, from_user.name + (msg % (successes, n_dice)) + str_buf)
-                    else:
-                        if successes == 0:
-                            self.send_message_channel(from_user,
-                                                      "CRITICAL GLITCH. It was nice knowing you, " +
-                                                      from_user.name + ". Results: " + str_buf)
-                        else:
-                            msg = " glitched but has %d hits on %d dice. Results: "
-                            if explode:
-                                msg = " glitched but has %d hits on %d dice with exploding sixes. Results: "
-                            self.send_message_channel(from_user, from_user.name + (msg % (successes, n_dice)) + str_buf)
-                else:
-                    self.send_message(from_user, from_user.name + " cannot roll with a pool of %d." % (n_dice,))
-            except exceptions.ValueError:
-                self.send_message(from_user, "Error in command. Say \"!help sr5\" for help.")
-        else:
-            self.send_message(from_user, "Error in command. Say \"!help sr5\" for help.")
-
-    def _on_sr_open(self, from_user, args):
-        if len(args) > 1:
-            try:
-                n_dice = self._eval_number(from_user, args[1])
-                max_result = 0
+        try:
+            target_number = self._eval_number(from_user, args, args[0])
+            n_dice = self._eval_number(from_user, args, args[1])
+            if not ((n_dice < 1) or (target_number < 2)):
+                results = []
                 str_buf = ""
+                fails = 0
+                successes = 0
                 for i in range(n_dice):
                     result = random.randint(1, 6)
                     result_sum = result
+                    # Rule of 6
                     while result == 6:
                         result = random.randint(1, 6)
                         result_sum += result
-                    if result_sum > max_result:
-                        max_result = result_sum
-                    str_buf += str(result_sum) + " "
-                self.send_message_channel(from_user,
-                                          from_user.name + " scored %d in an open test on %d D6. Results:" % (
-                                              max_result, n_dice) + str_buf)
-            except exceptions.ValueError:
-                self.send_message(from_user, "Error in command. Say \"!help sr_open\" for help.")
-        else:
-            self.send_message(from_user, "Error in command. Say \"!help sr_open\" for help.")
+                    if result_sum == 1:
+                        fails += 1
+                    if result_sum >= target_number:
+                        successes += 1
+                    str_buf = str_buf + str(result_sum) + " "
+                    results += [result_sum]
+                if (successes > 0) and (not (fails == len(results))):
+                    self.send_message_channel(from_user, from_user.name + (
+                        " made it with %d successes on %d against %d. Results: " % (
+                            successes, n_dice, target_number)) + str_buf)
+                else:
+                    if fails == len(results):
+                        self.send_message_channel(from_user,
+                                                  "CATASTROPHIC FAILURE. It was nice knowing you, " +
+                                                  from_user.name + ". Results: " + str_buf)
+                    else:
+                        self.send_message_channel(from_user, from_user.name + (
+                            " failed on %d against %d. Results: " % (n_dice, target_number)) + str_buf)
+        except exceptions.ValueError:
+            raise CommandException("Error in command. Say \"!help roll_sr\" for help.")
+
+    def _on_roll_sr5(self, from_user, args):
+        """Private method for making Shadowrun 5 success tests."""
+        if len(args) == 0:
+            raise CommandException("Error in command. Say \"!help sr5\" for help.")
+
+        explode = "explode" in args
+        try:
+            n_dice = self._eval_number(from_user, args, args[0])
+            char_url = None
+            try:
+                char_url = self._get_char_url(args, from_user.comment)
+            except AttributeError:
+                pass
+            if char_url and "no-dmg" not in args:
+                physical_dmg = self._get_attribute(char_url, "physical_damage_current")
+                if physical_dmg:
+                    n_dice -= int(physical_dmg) / 3
+                stun_dmg = self._get_attribute(char_url, "stun_damage_current")
+                if stun_dmg:
+                    n_dice -= int(stun_dmg) / 3
+            if n_dice < 1:
+                raise CommandException(from_user.name + " cannot roll with a pool of %d." % (n_dice,))
+
+            results = []
+            str_buf = ""
+            fails = 0
+            successes = 0
+            for i in range(n_dice):
+                result = 6
+                while result == 6:
+                    result = random.randint(1, 6)
+                    if result == 1:
+                        fails += 1
+                    if result >= 5:
+                        successes += 1
+                    str_buf = str_buf + str(result) + " "
+                    results += [result]
+                    if not explode:
+                        break
+            glitched = 2 * fails > n_dice
+            if not glitched:
+                msg = " has %d hits on %d dice. Results: "
+                if explode:
+                    msg = " has %d hits on %d dice with exploding sixes. Results: "
+                self.send_message_channel(from_user, from_user.name + (msg % (successes, n_dice)) + str_buf)
+            else:
+                if successes == 0:
+                    self.send_message_channel(from_user,
+                                              "CRITICAL GLITCH. It was nice knowing you, " +
+                                              from_user.name + ". Results: " + str_buf)
+                else:
+                    msg = " glitched but has %d hits on %d dice. Results: "
+                    if explode:
+                        msg = " glitched but has %d hits on %d dice with exploding sixes. Results: "
+                    self.send_message_channel(from_user, from_user.name + (msg % (successes, n_dice)) + str_buf)
+
+        except exceptions.ValueError:
+            raise CommandException("Error in command. Say \"!help sr5\" for help.")
+
+    def _on_sr_open(self, from_user, args):
+        if len(args) == 0:
+            raise CommandException("Error in command. Say \"!help sr_open\" for help.")
+
+        try:
+            n_dice = self._eval_number(from_user, args, args[0])
+            max_result = 0
+            str_buf = ""
+            for i in range(n_dice):
+                result = random.randint(1, 6)
+                result_sum = result
+                while result == 6:
+                    result = random.randint(1, 6)
+                    result_sum += result
+                if result_sum > max_result:
+                    max_result = result_sum
+                str_buf += str(result_sum) + " "
+            self.send_message_channel(from_user,
+                                      from_user.name + " scored %d in an open test on %d D6. Results:" % (
+                                          max_result, n_dice) + str_buf)
+        except exceptions.ValueError:
+            raise CommandException("Error in command. Say \"!help sr_open\" for help.")
 
     def _on_sr_ini(self, from_user, args):
-        if len(args) > 2:
+        if len(args) > 1:
             try:
-                ini_base = self._eval_number(from_user, args[1])
-                n_dice = self._eval_number(from_user, args[2])
+                ini_base = self._eval_number(from_user, args, args[0])
+                n_dice = self._eval_number(from_user, args, args[1])
                 result = 0
                 for i in range(n_dice):
                     result += random.randint(1, 6)
                 self.send_message_channel(from_user, from_user.name + " has initiative %d (base %d)" % (
                     result + ini_base, ini_base))
             except exceptions.ValueError:
-                self.send_message(from_user, "Error in command. Say \"!help sr_ini\" for help.")
+                raise CommandException("Error in command. Say \"!help sr_ini\" for help.")
         else:
             char_url = None
             try:
-                char_url = self._get_char_url(from_user.comment)
+                char_url = self._get_char_url(args, from_user.comment)
             except AttributeError:
                 pass
-            if char_url:
-                mode = ""
-                if len(args) > 1:
-                    mode = args[1] + "_"
-                try:
-                    base = self._get_attribute(char_url, "initiative_" + mode + "base")
-                    dice = self._get_attribute(char_url, "initiative_" + mode + "dice")
-                    if base and dice:
-                        base = int(base)
-                        dice = int(dice)
-                        result = base
-                        for i in range(dice):
-                            result += random.randint(1, 6)
-                        physical_dmg = self._get_attribute(char_url, "physical_damage_current")
-                        if physical_dmg:
-                            result -= int(physical_dmg) / 3
-                        stun_dmg = self._get_attribute(char_url, "stun_damage_current")
-                        if stun_dmg:
-                            result -= int(stun_dmg) / 3
-                        self.send_message_channel(from_user, "%s has initiative %d (on %d + %d D6)" % (
-                            from_user.name, result, base, dice))
-                    else:
-                        self.send_message(from_user, "Error. %s has no attributes %s and %s." % (
-                            char_url, "initiative_" + mode + "base", "initiative_" + mode + "dice"))
-                except ValueError:
-                    self.send_message(from_user, "Error in command. Say \"!help sr_ini\" for help.")
-            else:
-                self.send_message(from_user, "Error in command. Say \"!help sr_ini\" for help.")
+            if not char_url:
+                raise CommandException("Error in command. Say \"!help sr_ini\" for help.")
+            mode = ""
+            if len(args) > 0:
+                mode = args[0] + "_"
+            try:
+                base = self._get_attribute(char_url, "initiative_" + mode + "base")
+                dice = self._get_attribute(char_url, "initiative_" + mode + "dice")
+                if not base or not dice:
+                    raise CommandException("Error. %s has no attributes %s and %s." % (
+                        char_url, "initiative_" + mode + "base", "initiative_" + mode + "dice"))
+                base = int(base)
+                dice = int(dice)
+                result = base
+                for i in range(dice):
+                    result += random.randint(1, 6)
+                physical_dmg = self._get_attribute(char_url, "physical_damage_current")
+                if physical_dmg:
+                    result -= int(physical_dmg) / 3
+                stun_dmg = self._get_attribute(char_url, "stun_damage_current")
+                if stun_dmg:
+                    result -= int(stun_dmg) / 3
+                self.send_message_channel(from_user, "%s has initiative %d (on %d + %d D6)" % (
+                    from_user.name, result, base, dice))
+            except ValueError:
+                raise CommandException("Error in command. Say \"!help sr_ini\" for help.")
 
     def _on_vamp(self, from_user, args):
         """Private method for making Vampire success tests."""
-        if len(args) > 2:
-            try:
-                target_number = self._eval_number(from_user, args[1])
-                n_dice = self._eval_number(from_user, args[2])
-                if not ((n_dice < 1) or (target_number < 2)):
-                    str_buf = ""
-                    fails = 0
-                    successes = 0
-                    for i in range(n_dice):
-                        result = random.randint(1, 10)
-                        if result == 1:
-                            fails += 1
-                        if result >= target_number:
-                            successes += 1
-                        str_buf = str_buf + str(result) + " "
-                    if (successes > 0) and (fails < successes):
-                        self.send_message_channel(from_user, from_user.name + (
-                            " made it with %d successes on %d against %d. Results: " % (
-                                successes - fails, n_dice, target_number)) + str_buf)
-                    else:
-                        if (fails > 0) and (successes == 0):
-                            self.send_message_channel(from_user,
-                                                      "CATASTROPHIC FAILURE. It was nice knowing you, " +
-                                                      from_user.name + ". Results: " + str_buf)
-                        else:
-                            self.send_message_channel(from_user, from_user.name + (
-                                " failed on %d against %d. Results: " % (n_dice, target_number)) + str_buf)
-            except exceptions.ValueError:
-                self.send_message(from_user, "Error in command. Say \"!help vamp\" for help.")
-        else:
+        if len(args) <= 1:
+            raise CommandException("Error in command. Say \"!help vamp\" for help.")
+        try:
+            target_number = self._eval_number(from_user, args, args[0])
+            n_dice = self._eval_number(from_user, args, args[1])
+            if (n_dice < 1) or (target_number < 2):
+                raise CommandException("Error in command. Invalid target number or amount of dice")
+
+            str_buf = ""
+            fails = 0
+            successes = 0
+            for i in range(n_dice):
+                result = random.randint(1, 10)
+                if result == 1:
+                    fails += 1
+                if result >= target_number:
+                    successes += 1
+                str_buf = str_buf + str(result) + " "
+            if (successes > 0) and (fails < successes):
+                self.send_message_channel(from_user, from_user.name + (
+                    " made it with %d successes on %d against %d. Results: " % (
+                        successes - fails, n_dice, target_number)) + str_buf)
+            else:
+                if (fails > 0) and (successes == 0):
+                    self.send_message_channel(from_user,
+                                              "CATASTROPHIC FAILURE. It was nice knowing you, " +
+                                              from_user.name + ". Results: " + str_buf)
+                else:
+                    self.send_message_channel(from_user, from_user.name + (
+                        " failed on %d against %d. Results: " % (n_dice, target_number)) + str_buf)
+        except exceptions.ValueError:
             self.send_message(from_user, "Error in command. Say \"!help vamp\" for help.")
 
     def _on_help(self, from_user, args):
@@ -376,27 +429,13 @@ class DiceBot(mumble.CommandBot):
 
     """
         print "Command: " + str(args)
-        success = False
-        if args[0] == "roll":
-            self._on_roll(from_user, args)
-            success = True
-        if (args[0] == "roll_sr") or (args[0] == "sr"):
-            self._on_roll_sr(from_user, args)
-            success = True
-        if args[0] == "sr_open":
-            self._on_sr_open(from_user, args)
-            success = True
-        if args[0] == "sr_ini":
-            self._on_sr_ini(from_user, args)
-            success = True
-        if args[0] == "sr5":
-            self._on_roll_sr5(from_user, args)
-            success = True
-        if args[0] == "vamp":
-            self._on_vamp(from_user, args)
-            success = True
-        if args[0] == "help":
+        if args[0] in self._implemented_commands:
+            try:
+                self._implemented_commands[args[0]](from_user, ParsedArguments(args[1:]))
+            except CommandException as err:
+                self.send_message(from_user, err.__str__())
+
+        elif args[0] == "help":
             self._on_help(from_user, args)
-            success = True
-        if not success:
+        else:
             self.send_message(from_user, "Error in command. Say \"!help\" for help.")
