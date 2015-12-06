@@ -51,6 +51,12 @@ class CommandException:
     def __str__(self):
         return self._error_msg
 
+    
+def get_user_name(from_user, args):
+    if "name" in args:
+        return args["name"]
+    return from_user.name
+
 
 class DiceBot(mumble.CommandBot):
     """Implements a bot that makes fair dice rolls for role-playing games.
@@ -171,7 +177,7 @@ class DiceBot(mumble.CommandBot):
                 results = []
                 for i in range(n_dice):
                     results += [random.randint(1, d_dimension)]
-                str_buf = "Results (" + from_user.name + "): "
+                str_buf = "Results (" + get_user_name(from_user, args) + "): "
                 for result in results:
                     str_buf = str_buf + str(result) + " "
                 str_buf += "on %d D%d" % (n_dice, d_dimension)
@@ -207,16 +213,16 @@ class DiceBot(mumble.CommandBot):
                     str_buf = str_buf + str(result_sum) + " "
                     results += [result_sum]
                 if (successes > 0) and (not (fails == len(results))):
-                    self.send_message_channel(from_user, from_user.name + (
+                    self.send_message_channel(from_user, get_user_name(from_user, args) + (
                         " made it with %d successes on %d against %d. Results: " % (
                             successes, n_dice, target_number)) + str_buf)
                 else:
                     if fails == len(results):
                         self.send_message_channel(from_user,
                                                   "CATASTROPHIC FAILURE. It was nice knowing you, " +
-                                                  from_user.name + ". Results: " + str_buf)
+                                                  get_user_name(from_user, args) + ". Results: " + str_buf)
                     else:
-                        self.send_message_channel(from_user, from_user.name + (
+                        self.send_message_channel(from_user, get_user_name(from_user, args) + (
                             " failed on %d against %d. Results: " % (n_dice, target_number)) + str_buf)
         except exceptions.ValueError:
             raise CommandException("Error in command. Say \"!help roll_sr\" for help.")
@@ -242,7 +248,7 @@ class DiceBot(mumble.CommandBot):
                 if stun_dmg:
                     n_dice -= int(stun_dmg) / 3
             if n_dice < 1:
-                raise CommandException(from_user.name + " cannot roll with a pool of %d." % (n_dice,))
+                raise CommandException(get_user_name(from_user, args) + " cannot roll with a pool of %d." % (n_dice,))
 
             results = []
             str_buf = ""
@@ -265,17 +271,17 @@ class DiceBot(mumble.CommandBot):
                 msg = " has %d hits on %d dice. Results: "
                 if explode:
                     msg = " has %d hits on %d dice with exploding sixes. Results: "
-                self.send_message_channel(from_user, from_user.name + (msg % (successes, n_dice)) + str_buf)
+                self.send_message_channel(from_user, get_user_name(from_user, args) + (msg % (successes, n_dice)) + str_buf)
             else:
                 if successes == 0:
                     self.send_message_channel(from_user,
                                               "CRITICAL GLITCH. It was nice knowing you, " +
-                                              from_user.name + ". Results: " + str_buf)
+                                              get_user_name(from_user, args) + ". Results: " + str_buf)
                 else:
                     msg = " glitched but has %d hits on %d dice. Results: "
                     if explode:
                         msg = " glitched but has %d hits on %d dice with exploding sixes. Results: "
-                    self.send_message_channel(from_user, from_user.name + (msg % (successes, n_dice)) + str_buf)
+                    self.send_message_channel(from_user, get_user_name(from_user, args) + (msg % (successes, n_dice)) + str_buf)
 
         except exceptions.ValueError:
             raise CommandException("Error in command. Say \"!help sr5\" for help.")
@@ -298,7 +304,7 @@ class DiceBot(mumble.CommandBot):
                     max_result = result_sum
                 str_buf += str(result_sum) + " "
             self.send_message_channel(from_user,
-                                      from_user.name + " scored %d in an open test on %d D6. Results:" % (
+                                      get_user_name(from_user, args) + " scored %d in an open test on %d D6. Results:" % (
                                           max_result, n_dice) + str_buf)
         except exceptions.ValueError:
             raise CommandException("Error in command. Say \"!help sr_open\" for help.")
@@ -311,7 +317,7 @@ class DiceBot(mumble.CommandBot):
                 result = 0
                 for i in range(n_dice):
                     result += random.randint(1, 6)
-                self.send_message_channel(from_user, from_user.name + " has initiative %d (base %d)" % (
+                self.send_message_channel(from_user, get_user_name(from_user, args) + " has initiative %d (base %d)" % (
                     result + ini_base, ini_base))
             except exceptions.ValueError:
                 raise CommandException("Error in command. Say \"!help sr_ini\" for help.")
@@ -344,7 +350,7 @@ class DiceBot(mumble.CommandBot):
                 if stun_dmg:
                     result -= int(stun_dmg) / 3
                 self.send_message_channel(from_user, "%s has initiative %d (on %d + %d D6)" % (
-                    from_user.name, result, base, dice))
+                    get_user_name(from_user, args), result, base, dice))
             except ValueError:
                 raise CommandException("Error in command. Say \"!help sr_ini\" for help.")
 
@@ -369,16 +375,16 @@ class DiceBot(mumble.CommandBot):
                     successes += 1
                 str_buf = str_buf + str(result) + " "
             if (successes > 0) and (fails < successes):
-                self.send_message_channel(from_user, from_user.name + (
+                self.send_message_channel(from_user, get_user_name(from_user, args) + (
                     " made it with %d successes on %d against %d. Results: " % (
                         successes - fails, n_dice, target_number)) + str_buf)
             else:
                 if (fails > 0) and (successes == 0):
                     self.send_message_channel(from_user,
                                               "CATASTROPHIC FAILURE. It was nice knowing you, " +
-                                              from_user.name + ". Results: " + str_buf)
+                                              get_user_name(from_user, args) + ". Results: " + str_buf)
                 else:
-                    self.send_message_channel(from_user, from_user.name + (
+                    self.send_message_channel(from_user, get_user_name(from_user, args) + (
                         " failed on %d against %d. Results: " % (n_dice, target_number)) + str_buf)
         except exceptions.ValueError:
             self.send_message(from_user, "Error in command. Say \"!help vamp\" for help.")
