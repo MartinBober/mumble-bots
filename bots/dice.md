@@ -44,7 +44,7 @@ Example:
 
 > `!sr_open 8`
 
-This will perform an open 3rd edition roll with a pool of `<pool>` dice and yield the highest result.
+This will perform an open 3rd Edition roll with a pool of `<pool>` dice and yield the highest result.
 
 #### Initiative roll
 
@@ -68,7 +68,7 @@ In the second form, the same roll is done as in the first form but DiceBot will 
 
 In the third form, the character's `initiative_<mode>_base` and `initiative_<mode>_dice` attributes will be used.
 
-In the late two cases, the character's `stun_damage_current` and `physical_damage_current` attributes will be used to apply damage modifiers automatically.
+In the last two cases, the character's `stun_damage_current` and `physical_damage_current` attributes will be used to apply damage modifiers automatically.
 
 #### Shadowrun 5 roll
 
@@ -104,4 +104,4 @@ Examples:
 
 > `!help sr_ini`
 
-Calling the `help` verb without any parameter will give you a list of all available verbs. Calling `!help` with a verb will give you information about the verb's expected parameters.
+Calling the `help` verb without any parameters will give you a list of all available verbs. Calling `!help` with a verb will give you information about the verb's expected parameters.
