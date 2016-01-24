@@ -79,9 +79,12 @@ class DiceBot(mumble.CommandBot):
         mumble.CommandBot.__init__(self)
         self._implemented_commands = {
             "roll": self._on_roll,
-            "roll_sr": self._on_roll_sr,
-            "sr5": self._on_roll_sr5,
+            "roll_sr3": self._on_roll_sr3,
+            "sr3": self._on_roll_sr3,
             "sr_open": self._on_sr_open,
+            "roll_sr": self._on_roll_sr5,
+            "sr": self._on_roll_sr5,
+            "sr5": self._on_roll_sr5,
             "sr_ini": self._on_sr_ini,
             "vamp": self._on_vamp
         }
@@ -186,7 +189,7 @@ class DiceBot(mumble.CommandBot):
         except exceptions.ValueError:
             raise CommandException("Error in command. Say \"!help roll\" for help.")
 
-    def _on_roll_sr(self, from_user, args):
+    def _on_roll_sr3(self, from_user, args):
         """Private method for making Shadowrun 3 success tests."""
         if len(args) < 2:
             raise CommandException("Error in command. Say \"!help roll_sr\" for help.")

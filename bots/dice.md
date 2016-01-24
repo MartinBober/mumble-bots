@@ -28,11 +28,11 @@ This will roll `<n>` dice resulting in with values between 1 and `<type>`.
 
 #### Shadowrun 3 common roll
 
-> `!sr <target> <pool>`
+> `!sr3 <target> <pool>`
 
 Example:
 
-> `!sr 4 10`
+> `!sr3 4 10`
 
 This will perform a normal 3rd Edition dice roll with target number `<target>` and a pool of `<pool>` dice.
 
