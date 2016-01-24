@@ -28,7 +28,7 @@ class ParsedArguments:
                 self._normal_args += [arg]
 
     def __getitem__(self, item):
-        if type(item) is int:
+        if type(item) is int and item < len(self._normal_args):
             return self._normal_args[item]
         else:
             if item in self._special_args:
@@ -188,7 +188,7 @@ class DiceBot(mumble.CommandBot):
 
     def _on_roll_sr(self, from_user, args):
         """Private method for making Shadowrun 3 success tests."""
-        if len(args) == 0:
+        if len(args) < 2:
             raise CommandException("Error in command. Say \"!help roll_sr\" for help.")
 
         try:
