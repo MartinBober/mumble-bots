@@ -11,7 +11,6 @@ import urllib2
 
 
 class ParsedArguments:
-
     def __init__(self, args):
         self._normal_args = []
         self._special_args = {}
@@ -44,14 +43,13 @@ class ParsedArguments:
 
 
 class CommandException:
-
     def __init__(self, error_msg):
         self._error_msg = error_msg
 
     def __str__(self):
         return self._error_msg
 
-    
+
 def get_user_name(from_user, args):
     if "name" in args:
         return args["name"]
@@ -88,6 +86,7 @@ class DiceBot(mumble.CommandBot):
             "sr_ini": self._on_sr_ini,
             "vamp": self._on_vamp
         }
+        self._DICE_LIMIT = 1024
 
     def on_socket_closed(self):
         """Callback method for socket_closed event.
@@ -175,6 +174,9 @@ class DiceBot(mumble.CommandBot):
 
         try:
             n_dice = self._eval_number(from_user, args, split_arg[0])
+            if n_dice > self._DICE_LIMIT:
+                raise CommandException(
+                    "You can only roll up to %d dice but you wanted to roll %d!" % (self._DICE_LIMIT, n_dice))
             d_dimension = self._eval_number(from_user, args, split_arg[1])
             if not ((n_dice < 1) or (d_dimension < 1)):
                 results = []
@@ -197,6 +199,9 @@ class DiceBot(mumble.CommandBot):
         try:
             target_number = self._eval_number(from_user, args, args[0])
             n_dice = self._eval_number(from_user, args, args[1])
+            if n_dice > self._DICE_LIMIT:
+                raise CommandException(
+                    "You can only roll up to %d dice but you wanted to roll %d!" % (self._DICE_LIMIT, n_dice))
             if not ((n_dice < 1) or (target_number < 2)):
                 results = []
                 str_buf = ""
@@ -238,6 +243,9 @@ class DiceBot(mumble.CommandBot):
         explode = "explode" in args
         try:
             n_dice = self._eval_number(from_user, args, args[0])
+            if n_dice > self._DICE_LIMIT:
+                raise CommandException(
+                    "You can only roll up to %d dice but you wanted to roll %d!" % (self._DICE_LIMIT, n_dice))
             char_url = None
             try:
                 char_url = self._get_char_url(args, from_user.comment)
@@ -274,7 +282,8 @@ class DiceBot(mumble.CommandBot):
                 msg = " has %d hits on %d dice. Results: "
                 if explode:
                     msg = " has %d hits on %d dice with exploding sixes. Results: "
-                self.send_message_channel(from_user, get_user_name(from_user, args) + (msg % (successes, n_dice)) + str_buf)
+                self.send_message_channel(from_user,
+                                          get_user_name(from_user, args) + (msg % (successes, n_dice)) + str_buf)
             else:
                 if successes == 0:
                     self.send_message_channel(from_user,
@@ -284,7 +293,8 @@ class DiceBot(mumble.CommandBot):
                     msg = " glitched but has %d hits on %d dice. Results: "
                     if explode:
                         msg = " glitched but has %d hits on %d dice with exploding sixes. Results: "
-                    self.send_message_channel(from_user, get_user_name(from_user, args) + (msg % (successes, n_dice)) + str_buf)
+                    self.send_message_channel(from_user,
+                                              get_user_name(from_user, args) + (msg % (successes, n_dice)) + str_buf)
 
         except exceptions.ValueError:
             raise CommandException("Error in command. Say \"!help sr5\" for help.")
@@ -295,6 +305,9 @@ class DiceBot(mumble.CommandBot):
 
         try:
             n_dice = self._eval_number(from_user, args, args[0])
+            if n_dice > self._DICE_LIMIT:
+                raise CommandException(
+                    "You can only roll up to %d dice but you wanted to roll %d!" % (self._DICE_LIMIT, n_dice))
             max_result = 0
             str_buf = ""
             for i in range(n_dice):
@@ -307,7 +320,8 @@ class DiceBot(mumble.CommandBot):
                     max_result = result_sum
                 str_buf += str(result_sum) + " "
             self.send_message_channel(from_user,
-                                      get_user_name(from_user, args) + " scored %d in an open test on %d D6. Results:" % (
+                                      get_user_name(from_user,
+                                                    args) + " scored %d in an open test on %d D6. Results:" % (
                                           max_result, n_dice) + str_buf)
         except exceptions.ValueError:
             raise CommandException("Error in command. Say \"!help sr_open\" for help.")
@@ -317,6 +331,9 @@ class DiceBot(mumble.CommandBot):
             try:
                 ini_base = self._eval_number(from_user, args, args[0])
                 n_dice = self._eval_number(from_user, args, args[1])
+                if n_dice > self._DICE_LIMIT:
+                    raise CommandException(
+                        "You can only roll up to %d dice but you wanted to roll %d!" % (self._DICE_LIMIT, n_dice))
                 result = 0
                 for i in range(n_dice):
                     result += random.randint(1, 6)
@@ -343,6 +360,9 @@ class DiceBot(mumble.CommandBot):
                         char_url, "initiative_" + mode + "base", "initiative_" + mode + "dice"))
                 base = int(base)
                 dice = int(dice)
+                if dice > self._DICE_LIMIT:
+                    raise CommandException(
+                        "You can only roll up to %d dice but you wanted to roll %d!" % (self._DICE_LIMIT, dice))
                 result = base
                 for i in range(dice):
                     result += random.randint(1, 6)
@@ -364,6 +384,9 @@ class DiceBot(mumble.CommandBot):
         try:
             target_number = self._eval_number(from_user, args, args[0])
             n_dice = self._eval_number(from_user, args, args[1])
+            if n_dice > self._DICE_LIMIT:
+                raise CommandException(
+                    "You can only roll up to %d dice but you wanted to roll %d!" % (self._DICE_LIMIT, n_dice))
             if (n_dice < 1) or (target_number < 2):
                 raise CommandException("Error in command. Invalid target number or amount of dice")
 
