@@ -252,12 +252,16 @@ class DiceBot(mumble.CommandBot):
             except AttributeError:
                 pass
             if char_url and "no-dmg" not in args:
+                dmg_mod = 0
                 physical_dmg = self._get_attribute(char_url, "physical_damage_current")
                 if physical_dmg:
-                    n_dice -= int(physical_dmg) / 3
+                    dmg_mod += int(physical_dmg) / 3
                 stun_dmg = self._get_attribute(char_url, "stun_damage_current")
                 if stun_dmg:
-                    n_dice -= int(stun_dmg) / 3
+                    dmg_mod += int(stun_dmg) / 3
+                if dmg_mod != 0:
+                    n_dice -= dmg_mod
+                    print "Applied damage mod: %d" % (dmg_mod,)
             if n_dice < 1:
                 raise CommandException(get_user_name(from_user, args) + " cannot roll with a pool of %d." % (n_dice,))
 
@@ -367,11 +371,15 @@ class DiceBot(mumble.CommandBot):
                 for i in range(dice):
                     result += random.randint(1, 6)
                 physical_dmg = self._get_attribute(char_url, "physical_damage_current")
+                dmg_mod = 0
                 if physical_dmg:
-                    result -= int(physical_dmg) / 3
+                    dmg_mod += int(physical_dmg) / 3
                 stun_dmg = self._get_attribute(char_url, "stun_damage_current")
                 if stun_dmg:
-                    result -= int(stun_dmg) / 3
+                    dmg_mod += int(stun_dmg) / 3
+                if dmg_mod != 0:
+                    result -= dmg_mod
+                    print "Applied damage mod: %d" % (dmg_mod,)
                 self.send_message_channel(from_user, "%s has initiative %d (on %d + %d D6)" % (
                     get_user_name(from_user, args), result, base, dice))
             except ValueError:
