@@ -148,6 +148,7 @@ class DiceBot(mumble.CommandBot):
 
     @staticmethod
     def _get_char_url(args, comment):
+        print "User.comment: " + comment
         if "char-url" in args:
             return args["char-url"]
         results = re.findall(r"https://charxchange.com/chars/[0-9]+", comment)

@@ -59,9 +59,14 @@ class User(object):
     if msg.deaf: self.is_deaf = msg.deaf
     if msg.suppress: self.is_suppressed = msg.suppress
 
+    if msg.comment is None:
+      self.comment = ''
+    else:
+      self.comment = msg.comment
+
     if msg.comment:
       self.comment = msg.comment
-    elif msg.comment_hash:
+    if msg.comment_hash and not msg.comment:
       self.comment_hash = msg.comment_hash
       self.bot.connection.ask_comment_for_user(self.session)
       # The callback will set it automatically.
